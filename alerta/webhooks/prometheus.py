@@ -1,4 +1,3 @@
-
 from copy import copy
 
 import pytz
@@ -14,17 +13,22 @@ from . import webhooks
 
 
 def parse_prometheus(alert, external_url):
-
+    """
+    Looks legit on alertmanager format version 4
+    :param alert:
+    :param external_url: Link to external graph
+    :return: Parsed alert
+    """
     status = alert.get('status', 'firing')
 
     labels = copy(alert['labels'])
     annotations = copy(alert['annotations'])
 
-    starts_at = parse_date(alert['startsAt'])
-    if alert['endsAt'] == '0001-01-01T00:00:00Z':
+    starts_at = parse_date(alert.get('startsAt'))
+    if alert.get('endsAt') == '0001-01-01T00:00:00Z':
         ends_at = None
     else:
-        ends_at = parse_date(alert['endsAt'])
+        ends_at = parse_date(alert.get('endsAt'))
 
     if status == 'firing':
         severity = labels.pop('severity', 'warning')
@@ -74,7 +78,6 @@ def parse_prometheus(alert, external_url):
 @cross_origin()
 @permission('write:webhooks')
 def prometheus():
-
     alerts = []
     if request.json and 'alerts' in request.json:
         external_url = request.json.get('externalURL', None)
